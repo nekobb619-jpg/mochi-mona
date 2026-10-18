@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mochi Mona</title>
+  <meta name="theme-color" content="#F3EDEF">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Zen Maru Gothic"', 'system-ui', 'sans-serif'], wordmark: ['"Dela Gothic One"', 'sans-serif'] } } } };
+  </script>
+  <style>
+    :root {
+      /* 和菓子パレット */
+      --bg: #F3EDEF;        /* 桜鼠：ページ */
+      --shiratama: #FFFFFF; /* 白玉：面 */
+      --line: #E6DADE;      /* 求肥の境目 */
+      --ink: #3A2A24;       /* 黒蜜：文字 */
+      --ink-2: #7A6560;     /* 薄い黒蜜：補助文字 */
+      --sakura: #E98FA7;    /* 桜餅：じぶん研究 */
+      --sakura-d: #B9506E;
+      --sakura-l: #FCE9EE;
+      --yomogi: #86AE73;    /* よもぎ：こども学習 */
+      --yomogi-d: #4E7A3E;
+      --yomogi-l: #EAF3E4;
+      --kinako: #E9C77B;    /* きな粉：Q・ごほうび */
+      --stick: #C9A27A;     /* 串 */
+      --accent: var(--sakura);
+      --accent-d: var(--sakura-d);
+      --accent-l: var(--sakura-l);
+    }
+    body[data-mode="kids"] { --accent: var(--yomogi); --accent-d: var(--yomogi-d); --accent-l: var(--yomogi-l); }
+
+    html { -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--ink); font-feature-settings: "palt"; }
+    .wordmark { font-family: "Dela Gothic One", sans-serif; letter-spacing: .02em; }
+    .num { font-family: "Dela Gothic One", sans-serif; font-variant-numeric: tabular-nums; }
+
+    /* 面 */
+    .panel { background: var(--shiratama); border: 1px solid var(--line); border-radius: 22px; }
+    .well { background: var(--bg); border-radius: 16px; }
+
+    /* ボタン */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; border-radius: 999px;
+           padding: .55rem 1rem; font-weight: 700; font-size: .875rem; line-height: 1.2; transition: transform .08s ease, background .15s; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; pointer-events: none; }
+    .btn-accent { background: var(--accent-d); color: #fff; }
+    .btn-ink { background: var(--ink); color: #fff; }
+    .btn-soft { background: var(--bg); color: var(--ink); }
+    .btn-line { background: var(--shiratama); color: var(--ink); border: 1px solid var(--line); }
+    .btn-sm { padding: .35rem .75rem; font-size: .8rem; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+
+    /* チップ */
+    .chip { flex: none; border-radius: 999px; padding: .4rem .85rem; font-size: .82rem; background: var(--shiratama); border: 1px solid var(--line); white-space: nowrap; }
+    .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .chip .cnt { opacity: .55; margin-left: .25rem; font-size: .75rem; }
+    .scroll-x { display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .scroll-x::-webkit-scrollbar { display: none; }
+
+    /* 入力 */
+    .field { width: 100%; background: var(--shiratama); border: 1px solid var(--line); border-radius: 14px; padding: .6rem .8rem; }
+    .field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-l); }
+    label.lbl { display: block; font-size: .8rem; color: var(--ink-2); }
+    label.lbl > .field { margin-top: .25rem; color: var(--ink); font-size: .9rem; }
+
+    /* カードタイル */
+    .tile { background: var(--shiratama); border-radius: 18px; overflow: hidden; border: 1px solid var(--line); text-align: left; }
+    .tile.pinned { border: 2px solid var(--sakura); }
+    .tile .ph { aspect-ratio: 4 / 3; background: var(--sakura-l); display: grid; place-items: center; overflow: hidden; }
+    .tile .ph img { width: 100%; height: 100%; object-fit: cover; }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tag { font-size: .68rem; border-radius: 999px; padding: .05rem .45rem; }
+    .tag-g { background: var(--sakura-l); color: var(--sakura-d); }
+    .tag-a { background: #EEF0F6; color: #4A5578; }
+
+    /* 串だんごナビ */
+    .dango-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom)); z-index: 40;
+                 width: min(360px, calc(100vw - 32px)); height: 84px; }
+    .dango-nav .stick { position: absolute; left: -6%; right: -6%; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: var(--stick);
+                        box-shadow: 0 1px 0 rgba(58, 42, 36, .15); }
+    .dango-nav .row { position: relative; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+    .dango { position: relative; border-radius: 50%; display: grid; place-items: center; text-align: center; font-weight: 700;
+             font-size: .72rem; line-height: 1.15; box-shadow: inset 0 -6px 0 rgba(58, 42, 36, .08), 0 6px 14px -6px rgba(58, 42, 36, .35);
+             transition: transform .15s ease; }
+    .dango:active { transform: scale(.94); }
+    .dango .ico { font-size: 1.35rem; display: block; margin-bottom: .1rem; }
+    .dango-side { width: 70px; height: 70px; background: #fff; color: var(--ink-2); }
+    .dango-side[data-mode="personal"][aria-current="page"] { background: var(--sakura); color: #fff; }
+    .dango-side[data-mode="kids"][aria-current="page"] { background: var(--yomogi); color: #fff; }
+    .dango-main { width: 84px; height: 84px; background: #fff; color: var(--ink); border: 3px solid var(--accent); }
+    .dango-main .ico { font-size: 1.7rem; }
+    main { padding-bottom: 130px; }
+
+    /* ダイアログ：スマホは下からのシート */
+    dialog { color: var(--ink); border: none; padding: 0; background: var(--shiratama); max-height: 92vh; overscroll-behavior: contain; }
+    dialog::backdrop { background: rgba(58, 42, 36, .45); }
+    @media (max-width: 640px) {
+      dialog.sheet { width: 100vw; max-width: 100vw; margin: auto 0 0 0; border-radius: 24px 24px 0 0; max-height: 90vh; }
+      dialog.sheet[open] { animation: sheet-up .22s ease-out; }
+    }
+    @media (min-width: 641px) { dialog.sheet { border-radius: 26px; } }
+    @keyframes sheet-up { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+    .grabber { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 8px auto 0; }
+    @media (min-width: 641px) { .grabber { display: none; } }
+
+    .sheet-item { display: flex; align-items: center; gap: .9rem; width: 100%; padding: .9rem 1rem; border-radius: 18px; text-align: left; background: var(--bg); }
+    .sheet-item .big { font-size: 1.6rem; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; border-radius: 50%; background: #fff; flex: none; }
+    .sheet-item b { display: block; }
+    .sheet-item small { color: var(--ink-2); }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body class="font-sans min-h-screen" data-mode="personal">
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-30 backdrop-blur" style="background: color-mix(in srgb, var(--bg) 88%, transparent)">
+    <div class="max-w-5xl mx-auto px-4 pt-3 pb-2 flex items-center gap-3">
+      <div class="min-w-0">
+        <div class="wordmark text-[1.35rem] leading-none">Mochi Mona</div>
+        <div id="mode-title" class="text-xs mt-1" style="color: var(--accent-d)">じぶん研究</div>
+      </div>
+      <div class="flex-1"></div>
+      <button id="conn-badge" class="flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1.5 bg-white border" style="border-color: var(--line)" title="接続状態">
+        <span id="conn-dot" class="w-2 h-2 rounded-full bg-stone-300"></span><span id="conn-text">…</span>
+      </button>
+      <button id="btn-settings" class="w-10 h-10 rounded-full bg-white border grid place-items-center" style="border-color: var(--line)" aria-label="設定">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-2 space-y-3">
+
+    <!-- じぶん研究 -->
+    <section id="personal-panel" class="space-y-3">
+      <div class="relative">
+        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="カードを検索（タイトル・本文・タグ）" class="field" style="padding-left:2.5rem" aria-label="カードを検索">
+      </div>
+      <div id="para-tabs" class="scroll-x" role="tablist" aria-label="PARAで絞り込み"></div>
+      <div id="tag-filters" class="space-y-1.5"></div>
+      <div id="card-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+      <div id="empty-state" class="hidden text-center py-14 px-6">
+        <svg class="mx-auto mb-4" width="120" height="48" viewBox="0 0 120 48" aria-hidden="true">
+          <rect x="0" y="22" width="120" height="4" rx="2" fill="var(--stick)"/>
+          <circle cx="28" cy="24" r="18" fill="var(--sakura)"/><circle cx="60" cy="24" r="18" fill="#fff" stroke="var(--line)"/><circle cx="92" cy="24" r="18" fill="var(--yomogi)"/>
+        </svg>
+        <p class="font-bold">まだカードがありません</p>
+        <p class="text-sm mt-1" style="color: var(--ink-2)">下のまんなかの「撮る」から、本やメモを1枚撮ってみましょう。</p>
+      </div>
+    </section>
+
+    <!-- こども学習ハブ -->
+    <section id="kids-panel" class="hidden"></section>
+  </main>
+
+  <!-- 串だんごナビ -->
+  <nav class="dango-nav" aria-label="メイン">
+    <div class="stick"></div>
+    <div class="row">
+      <button class="dango dango-side" data-mode="personal" aria-current="page"><span><span class="ico">🌸</span>じぶん</span></button>
+      <button class="dango dango-main" id="btn-capture" aria-label="撮る・取り込む">
+        <span><svg class="mx-auto" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>撮る</span>
+      </button>
+      <button class="dango dango-side" data-mode="kids"><span><span class="ico">🌿</span>こども</span></button>
+    </div>
+  </nav>
+
+  <!-- 取り込みシート -->
+  <dialog id="capture-sheet" class="sheet w-[min(460px,96vw)]">
+    <div class="grabber"></div>
+    <div class="p-4 space-y-2">
+      <div class="font-bold px-1 pb-1" id="capture-title">取り込む</div>
+      <button class="sheet-item" data-cap="camera"><span class="big">📷</span><span><b>カメラで撮る</b><small>書画カメラ／スマホのカメラ。続けて何枚でも</small></span></button>
+      <button class="sheet-item" data-cap="file"><span class="big">🖼️</span><span><b>写真・PDFを選ぶ</b><small id="cap-file-sub">ギャラリーやファイルから</small></span></button>
+      <button class="sheet-item" data-cap="inbox" id="cap-inbox"><span class="big">☁️</span><span><b>ドライブのInboxを取り込む</b><small>Mochi_Inbox に入れた写真をまとめてカード化</small></span></button>
+      <button class="btn btn-soft w-full mt-1" data-cap="close">閉じる</button>
+    </div>
+    <input id="file-input" type="file" accept="image/*,application/pdf" multiple class="hidden">
+  </dialog>
+
+  <!-- 分析プレビュー（じぶん研究） -->
+  <dialog id="analyze-modal" class="sheet w-[min(720px,96vw)]">
+    <div class="grabber"></div>
+    <form method="dialog" id="analyze-form" class="p-5 space-y-3">
+      <div class="flex items-center gap-2">
+        <h2 class="font-bold text-lg">カードにする</h2>
+        <span id="an-demo" class="hidden tag" style="background:#FFF3D6;color:#8A5A00">サンプル応答</span>
+        <div class="flex-1"></div>
+        <button value="cancel" class="w-9 h-9 rounded-full btn-soft" aria-label="閉じる">✕</button>
+      </div>
+      <div id="an-thumbs" class="scroll-x"></div>
+      <div id="an-loading" class="text-center py-10" style="color: var(--ink-2)">読み取り中…</div>
+      <div id="an-body" class="hidden space-y-3">
+        <label class="lbl">タイトル<input id="an-title" class="field"></label>
+        <label class="lbl">3行要約<textarea id="an-summary" rows="3" class="field"></textarea></label>
+        <div class="grid sm:grid-cols-3 gap-2">
+          <label class="lbl">置き場所<select id="an-para" class="field"></select></label>
+          <label class="lbl">ジャンル（,区切り）<input id="an-genre" class="field"></label>
+          <label class="lbl">次にやること（,区切り）<input id="an-action" class="field"></label>
+        </div>
+        <details><summary class="text-sm cursor-pointer" style="color: var(--ink-2)">読み取った本文</summary>
+          <textarea id="an-ocr" rows="8" class="field text-xs font-mono mt-1"></textarea></details>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="an-notebooklm"> NotebookLM用ドキュメントにも追記する</label>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="an-pin"> ピン留めする</label>
+      </div>
+      <div class="flex gap-2 justify-end pt-1">
+        <button value="cancel" class="btn btn-soft">やめる</button>
+        <button id="an-save" value="default" class="btn btn-accent" disabled>カードを保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- カード詳細 -->
+  <dialog id="card-modal" class="sheet w-[min(920px,96vw)]">
+    <div class="grabber"></div>
+    <div id="card-detail" class="p-5"></div>
+  </dialog>
+
+  <!-- 設定 -->
+  <dialog id="settings-modal" class="sheet w-[min(640px,96vw)]">
+    <div class="grabber"></div>
+    <form method="dialog" id="settings-form" class="p-5 space-y-4 text-sm">
+      <div class="flex items-center"><h2 class="font-bold text-lg">設定</h2><div class="flex-1"></div><button value="cancel" class="w-9 h-9 rounded-full btn-soft" aria-label="閉じる">✕</button></div>
+      <p class="text-xs" style="color: var(--ink-2)">設定はこの端末のブラウザにだけ保存されます。PCとPixelでそれぞれ入力してください。</p>
+
+      <fieldset class="well p-3 space-y-2">
+        <legend class="font-bold px-1">GAS につなぐ（本番）</legend>
+        <label class="lbl">GAS Web App URL<input name="gasUrl" class="field" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <label class="lbl">合言葉トークン<input name="token" type="password" class="field" placeholder="setup() のログに出た MOCHI_TOKEN"></label>
+      </fieldset>
+
+      <fieldset class="well p-3 space-y-2">
+        <legend class="font-bold px-1">Gemini を直接使う（お試し用）</legend>
+        <p class="text-xs" style="color:#8A5A00">APIキーがこのブラウザに保存されます。自分の端末だけで使ってください。GASもこれも空なら、サンプル応答で動きます。</p>
+        <label class="lbl">Gemini API キー<input name="geminiKey" type="password" class="field"></label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="lbl">速いモデル（FAST）<input name="modelFast" class="field" placeholder="版を固定したモデル名"></label>
+          <label class="lbl">深いモデル（DEEP）<input name="modelDeep" class="field" placeholder="版を固定したモデル名"></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="well p-3 space-y-2">
+        <legend class="font-bold px-1">Obsidian</legend>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="lbl">自分用 Vault 名<input name="vaultName" class="field"></label>
+          <label class="lbl">保存フォルダ<input name="vaultFolder" class="field" placeholder="Mochi"></label>
+          <label class="lbl">こども用 Vault 名<input name="kidsVaultName" class="field" placeholder="AURA KIDS"></label>
+          <label class="lbl">こども用フォルダ<input name="kidsVaultFolder" class="field" placeholder="Mochi/Learner-A"></label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" data-pick-vault="personal" class="btn btn-line btn-sm">自分用Vaultのフォルダを選ぶ</button>
+          <button type="button" data-pick-vault="kids" class="btn btn-line btn-sm">こども用Vaultのフォルダを選ぶ</button>
+        </div>
+        <div id="vault-names" class="text-xs" style="color: var(--ink-2)"></div>
+      </fieldset>
+
+      <fieldset class="well p-3 space-y-2">
+        <legend class="font-bold px-1">こどもモードの名前の伏せ字・ごほうび</legend>
+        <label class="lbl">Learner-A に置き換える呼び名（,区切り）<input name="learnerAliases" type="password" class="field" placeholder="下の名前, ニックネーム"></label>
+        <label class="lbl">●● に伏せる語（学校名・先生名など）<input name="scrubTerms" type="password" class="field"></label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="lbl">1問正解あたりのQ<input name="qPerCorrect" type="number" min="0" class="field"></label>
+          <label class="lbl">全問正解ボーナスQ<input name="qAllBonus" type="number" min="0" class="field"></label>
+        </div>
+      </fieldset>
+
+      <div class="flex flex-wrap gap-2 justify-end">
+        <button type="button" id="btn-test-conn" class="btn btn-soft">接続を確かめる</button>
+        <button type="button" id="btn-nb-download" class="btn btn-soft">お試し用NotebookLMテキストを保存</button>
+        <button value="default" class="btn btn-accent">設定を保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="fixed left-1/2 -translate-x-1/2 z-[60] space-y-2 w-[min(520px,92vw)]" style="bottom: calc(110px + env(safe-area-inset-bottom))" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
