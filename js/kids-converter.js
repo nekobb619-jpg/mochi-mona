@@ -7,7 +7,7 @@
 //   - AIの応答は scrubDeep() で名前・学校名などを置換してから画面に出す。
 
 import { getUnitCandidates, unitById, SUBJECTS } from './school-units.js';
-import { validateQuiz, STATUS_LABEL } from './quiz-validator.js';
+import { validateQuiz, STATUS_LABEL, toYumekawaQuiz } from './quiz-validator.js';
 import { HYPOTHESIS } from './ai.js';
 import { buildKidsMarkdown, openInObsidian, saveToVault, fsSupported, downloadMarkdown, safeFileName } from './obsidian-export.js';
 
@@ -48,19 +48,63 @@ export function estimateQ(score, { qPerCorrect = 10, qAllBonus = 20 } = {}) {
 }
 
 /** 保護者ポータル取り込み用 JSON（ポータル側の取りこみ仕様が変わったらここだけ直す） */
+// ─── こども学習サポートポータル の 形（2026-10 時点の 本物の コレクション）に 合わせる ───
+//   ポータルの「取りこみ」タブに 貼ると、各コレクションへ 追加される（同じ 内容を 2回 貼っても ふえない id）。
+//   形の 正本：docs/DATA_CONTRACT.md（ここを 変えたら そちらも 直す）
+export const PORTAL_KIND = 'mochi-mona-portal';
+const SOURCE_LABEL = { test: 'テスト', homework: '宿題' };
+
+/** テストの おこづかい（ポータルの きまり：満点の 60%以上 10円・90%以上 50円・100% 100円） */
+export function testYen(score, full) {
+  const p = full > 0 ? score / full : 0;
+  return p >= 1 ? 100 : p >= 0.9 ? 50 : p >= 0.6 ? 10 : 0;
+}
+function addDays(ymd, n) {
+  const d = new Date(ymd + 'T12:00:00'); d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+const num = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
+
 export function toPortalPayload(mode, result, { unit, date }) {
-  const base = { schema: 'mochi-mona/portal-import@1', exported_at: new Date().toISOString(), learner: 'Learner-A', source: 'mochi-mona' };
+  const base = { kind: PORTAL_KIND, schema: 'mochi-mona/portal-import@2', exported_at: new Date().toISOString(), learner: 'Learner-A', source: 'mochi-mona' };
+  const r = result || {};
   if (mode === 'test' || mode === 'homework') {
-    const unitId = unit?.id || result.allowTests?.[0]?.unit_id || '';
+    const unitId = unit?.id || r.allowTests?.[0]?.unit_id || '';
+    const subject = unit?.subject || r.subject || '';
+    const unitName = unit?.title || '';
+    const tests = (r.allowTests || []).map((t) => ({ t, score: num(t.score), full: num(t.max_score) || 100 })).filter((x) => x.score !== null);
+    const m = r.meeting;
+    const meetings = m ? [{
+      date: m.date || date, source: SOURCE_LABEL[mode], subject, unit: unitName, unit_id: unitId,
+      did: m.did || (m.observations || [])[0] || '',
+      hyps: (m.hypotheses || []).map((h) => ({ cls: h.code, text: [h.evidence, h.next_step ? '→ ' + h.next_step : ''].filter(Boolean).join(' ') })),
+      child: (m.plan || []).join(' ／ '),
+      check: m.check || '',
+      checkDate: addDays(m.date || date, 7),
+      adult: '', talk: [], proposals: [], result: null,
+      score: tests[0] ? tests[0].score + ' / ' + tests[0].full : '',
+      title: m.title || '', observations: m.observations || [],
+      learner: 'Learner-A', from: 'mochi-mona',
+    }] : [];
+    const allowTests = mode === 'test' ? tests.map(({ t, score, full }) => ({
+      date: t.date || date, subject: t.subject || subject, score, full, yen: testYen(score, full),
+      note: [t.title, unitName].filter(Boolean).join(' / '), unit_id: unitId || t.unit_id || '', from: 'mochi-mona',
+    })) : [];
+    return { ...base, meetings, allowTests };
+  }
+  if (mode === 'letter') {
     return {
       ...base,
-      meetings: result.meeting ? [{ ...result.meeting, date: result.meeting.date || date, learner: 'Learner-A', unit_id: unitId, subject: unit?.subject || result.subject, source_type: result.source_type }] : [],
-      allowTests: (result.allowTests || []).map((t) => ({ ...t, unit_id: unitId || t.unit_id, subject: unit?.subject || t.subject })),
+      events: (r.events || []).filter((e) => e && e.date && e.title).map((e) => ({
+        date: e.date, title: e.title, kind: /テスト|検定/.test(e.title) ? 'テスト' : '行事',
+        note: [e.note, (e.bring || []).length ? '持ち物：' + e.bring.join('・') : ''].filter(Boolean).join(' ／ '), from: 'mochi-mona',
+      })),
+      letters: (r.letters || []).map((l) => ({ date: l.date || date, no: l.no || '', title: l.title || '', points: l.points || [], from: 'mochi-mona' })),
     };
   }
-  if (mode === 'letter') return { ...base, events: result.events || [], letters: result.letters || [] };
   if (mode === 'notebook') {
-    return { ...base, q_awards: [{ date, amount: result.q_estimate, reason: `ノート丸付け ${result.score?.correct}/${result.score?.total}`, kind: result.kind }] };
+    // Q は yumekawa の セーブデータに ある ので ポータルには 入らない（目安として 残すだけ）
+    return { ...base, q_awards: [{ date, amount: r.q_estimate, reason: `ノート丸付け ${r.score?.correct}/${r.score?.total}`, kind: r.kind }] };
   }
   return base;
 }
@@ -239,7 +283,7 @@ export class KidsConverter {
     if (fails.length) return this.toast(`⛔ 不合格の類題（${fails.map((i) => i + 1).join(', ')}）は保存できません。JSONを直して再検証してください`, 'error');
     const stage = this.root.querySelector('[data-ref="stageId"]')?.value.trim() || '';
     const drafts = idx.map((i) => {
-      const { source_no, ...quiz } = this.result.quizzes[i];
+      const quiz = toYumekawaQuiz(this.result.quizzes[i]);
       return {
         target_stage_id: stage,
         unit_id: this.selectedUnit?.id || '',
@@ -254,8 +298,7 @@ export class KidsConverter {
   async copyQuizzes() {
     const idx = this._selectedQuizIdx();
     const list = (idx.length ? idx : (this.result.quizzes || []).map((_, i) => i)).map((i) => {
-      const { source_no, ...q } = this.result.quizzes[i];
-      return q;
+      return toYumekawaQuiz(this.result.quizzes[i]);
     });
     await navigator.clipboard.writeText(JSON.stringify(list, null, 2));
     this.toast('類題JSON（yumekawa形式）をコピーしました');
@@ -417,6 +460,7 @@ export class KidsConverter {
           <ul class="text-sm space-y-1">${(t.items || []).map((it) => `<li class="flex gap-2"><span class="w-5 text-center">${it.correct ? '⭕' : '✖️'}</span><span class="w-10 flex-none" style="color:var(--ink-2)">${esc(it.no)}</span><span>${esc(it.topic)}</span></li>`).join('')}</ul>
         </div>
         <div>
+          ${m.did ? `<div class="text-sm font-bold mb-1">できたこと</div><p class="text-sm mb-2">${esc(m.did)}</p>` : ''}
           <div class="text-sm font-bold mb-1">見えたこと</div>
           <ul class="text-sm space-y-1 list-disc pl-5">${(m.observations || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
         </div>
@@ -431,6 +475,7 @@ export class KidsConverter {
               <div class="mt-1" style="color:var(--yomogi-d)">家でやること：${esc(h.next_step)}</div></div>
           </div>`).join('')}</div>
         ${(m.plan || []).length ? `<ul class="text-sm mt-2 space-y-1">${m.plan.map((x) => `<li>☐ ${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${m.check ? `<div class="text-sm mt-2" style="color:var(--ink-2)">1週間後に 見ること：${esc(m.check)}</div>` : ''}
       </div>
 
       ${this._renderQuizzes(r)}
@@ -450,7 +495,8 @@ export class KidsConverter {
           <div class="text-[.72rem]" style="color:var(--ink-2)">AGENTS.md のルールで自動チェック済み</div>
         </div>
         <div class="flex-1"></div>
-        <label class="lbl">ステージID<input data-ref="stageId" class="field !py-1.5 w-36" placeholder="例: math-div2"></label>
+        <label class="lbl">yumekawa の ステージID<input data-ref="stageId" list="mm-stage-ids" class="field !py-1.5 w-64" value="${esc(this.selectedUnit?.stages?.[0] || '')}" placeholder="例: 算数/わり算/hissan_2digit01"></label>
+        <datalist id="mm-stage-ids">${(this.selectedUnit?.stages || []).map((sid) => `<option value="${esc(sid)}">`).join('')}</datalist>
       </div>
       <div class="space-y-3">
         ${qs.map((q, i) => {

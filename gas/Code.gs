@@ -310,7 +310,7 @@ var KIDS_COMMON_ = '\n【厳守ルール】\n' +
 var QUIZ_RULES_ = '\n【類題（quizzes）のルール — yumekawa AGENTS.md 準拠】\n' +
   '- 誤答した問題ごとに1問ずつ、最大5問。\n' +
   '- 元の問題文・数値・登場物をそのまま使わない。必ず別のシチュエーション・別の数値のオリジナル問題にする。\n' +
-  '- a は3〜4個。全選択肢の文字数と文体（語尾）をそろえる。「正解だけ長い」「ふざけた誤答」は禁止。誤答はよくある間違い（繰り上がり忘れ・位取りずれ等）から作る。\n' +
+  '- a は必ず4個（yumekawa は 4択）。全選択肢の文字数と文体（語尾）をそろえる。ふりがな・（ ）の補足を正解だけに付けない。「正解だけ長い」「ふざけた誤答」は禁止。誤答はよくある間違い（繰り上がり忘れ・位取りずれ等）から作る。\n' +
   '- c は正解のインデックス（0始まり）。\n' +
   '- hint に答えや答えの数値を書かない。考え方の方向だけを短く（40字程度）。\n' +
   '- job_desc には解説と「💡 考えるポイント」を必ず含める。\n' +
@@ -331,11 +331,13 @@ function kidsPrompt_(mode, p) {
       '  "allowTests": [{"date": "' + date + '", "subject": "", "unit_id": "", "title": "テスト名", "score": 数値またはnull, "max_score": 数値またはnull,\n' +
       '                  "items": [{"no": "大問-小問", "correct": true|false, "topic": "何をきく問題か"}]}],\n' +
       '  "meeting": {\n    "date": "' + date + '", "learner": "Learner-A", "title": "対策会議のタイトル",\n' +
+      '    "did": "できたこと（1文。まず よい ところから）",\n' +
       '    "observations": ["事実として見えたこと"],\n' +
       '    "hypotheses": [{"code": "A|B|C|D|E", "label": "理解|記憶|読み落とし|実行ミス|表現", "evidence": "どの問題のどんな跡からそう考えたか", "next_step": "家でできる確かめ方・手立て"}],\n' +
-      '    "plan": ["次の1週間の小さな行動"]\n  },\n' +
+      '    "plan": ["次の1週間の小さな行動（子どもと いっしょに する こと）"],\n' +
+      '    "check": "1週間後に 何を 見れば 手立てが 効いたか わかるか（1文）"\n  },\n' +
       '  "wrong_items": [{"no": "", "summary": "元の問題の要点（数値含む）", "learner_answer_summary": "", "correct_concept": "正しい考え方"}],\n' +
-      '  "quizzes": [{"q": "", "a": ["", "", ""], "c": 0, "hint": "", "job_title": "", "job_desc": "", "scenario": "", "source_no": "対応する wrong_items の no"}]\n}\n' +
+      '  "quizzes": [{"q": "", "a": ["", "", "", ""], "c": 0, "hint": "", "job_title": "", "job_desc": "", "scenario": "", "source_no": "対応する wrong_items の no"}]\n}\n' +
       'つまずき仮説は A:理解 / B:記憶 / C:読み落とし / D:実行ミス / E:表現 の5分類で。\n' + QUIZ_RULES_ + '\n' + KIDS_COMMON_;
   }
   if (mode === 'letter') {

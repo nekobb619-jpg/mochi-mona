@@ -1,5 +1,7 @@
 # 🍡 Mochi Mona（モチ・モナ）
 
+> 開発する AI・別のチャットは、まず **[AGENTS.md](AGENTS.md)**（ルール）と **[docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md)**（データの形）を読んでください。
+
 書画カメラ／Pixel で撮ったものを、
 
 - **🌱 じぶん研究**：要約カード化 → Google ドライブ＆シート、Obsidian、NotebookLM へ
@@ -23,7 +25,10 @@ mochi-mona/
 │   ├── quiz-validator.js   AGENTS.md 準拠チェッカー
 │   ├── obsidian-export.js  obsidian:// 起動 ＆ File System Access API で .md 直接保存
 │   └── school-units.js     単元マスタ u001〜u053（yumekawa のミラー）
-├── gas/Code.gs             GAS バックエンド
+├── gas/Code.gs             GAS バックエンド（プロンプトは js/ai.js と同じものを持つ）
+├── tools/sync-school-units.mjs  yumekawa の単元マスタから js/school-units.js を作り直す
+├── docs/DATA_CONTRACT.md   ポータル・yumekawa とのデータの形（正本）
+├── AGENTS.md / CLAUDE.md   開発する AI へのルール
 └── tests/core.test.js      ロジックの単体テスト
 ```
 
@@ -66,9 +71,9 @@ npm run serve        # → http://localhost:8080
 | 項目 | 内容 |
 |---|---|
 | GAS のアクセス権 | 仕様書の「自分のみ」は GitHub Pages からの fetch が Google ログインへリダイレクトされて CORS で失敗するため、**「全員」＋合言葉トークン必須**にしました。トークンが無いリクエストはすべて拒否します。 |
-| ポータル JSON の形 | 保護者ポータルの取りこみ仕様が手元に無いため `schema: "mochi-mona/portal-import@1"` で `meetings` / `allowTests` / `events` / `letters` / `q_awards` を出しています。形を合わせるときは `kids-converter.js` の `toPortalPayload()` だけ直せば済みます。 |
-| yumekawa 類題の `c` | 正解の **0始まりインデックス** として扱っています。yumekawa 側が違う場合は `quiz-validator.js` と プロンプトの該当行を直してください。 |
-| 単元マスタ | u001〜u053 は小4の一般的な単元で作った**仮データ**です。yumekawa の `school-units.js` で丸ごと置き換えてください（`id/subject/title/start/end` を使用）。 |
+| ポータル JSON の形 | `kind: "mochi-mona-portal"`・`schema: "mochi-mona/portal-import@2"`。ポータルの本物のフィールド（対策会議の `did`/`hyps`/`child`/`check`、おこづかい帳の `full`/`yen` など）で出し、ポータルの「取りこみ」タブにそのまま貼れます。形の正本は [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md)。 |
+| yumekawa 類題 | yumekawa と同じ **4択**・`c` は0始まり。コピー／保存のときに `scenario` を yumekawa の吹き出し形式 `[{name, icon, msg}]` に変換します。 |
+| 単元マスタ | yumekawa の `js/school-units.js`（正本）から `node tools/sync-school-units.mjs <パス>` で作ります。id は yumekawa・ポータルと共通。地名は消してから入れます（公開リポジトリのため）。 |
 | Inbox 取込後のファイル | 成功分はカード画像として `Mochi_Media` へ移動、失敗分は `ERROR_` を付けて `Mochi_Inbox_Processed` へ移動（同じファイルで何度も失敗し続けないため）。 |
 | こどもモードの PDF | 黒塗りできないため受け付けません（画像のみ）。 |
 | 連続撮影（じぶん研究） | 複数ページは1枚のカードにまとめ、`drive_file_id` にカンマ区切りで全ページの ID を入れます。 |
@@ -84,5 +89,5 @@ npm run serve        # → http://localhost:8080
 
 ```bash
 npm run check   # 全 JS と Code.gs の構文チェック
-npm test        # 単元推定・類題チェッカー・匿名化・ポータル JSON のテスト（17件）
+npm test        # 単元推定・類題チェッカー・匿名化・ポータル JSON のテスト（24件）
 ```

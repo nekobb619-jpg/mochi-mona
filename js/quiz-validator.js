@@ -1,13 +1,14 @@
 // quiz-validator.js — yumekawa AGENTS.md 準拠の類題チェッカー（DOM非依存・Node でもテスト可）
 //
 // 想定フォーマット（yumekawa js/quizzes/*.js 互換）:
-//   { q, a: [選択肢...], c: 正解インデックス(0始まり), hint, job_title, job_desc, scenario }
+//   { q, a: [選択肢4つ], c: 正解インデックス(0始まり), hint, job_title, job_desc, scenario }
+//   scenario は AI の 出力では 文字列。yumekawa に 渡す ときは toYumekawaQuiz() で [{ name, icon, msg }] に する。
 //
 // level: 'fail' = 保存不可レベル / 'warn' = 人の目で確認 / 'ok'
 
 export const RULES = {
   LONG_ANSWER_RATIO: 1.4,     // 正解の文字数 ÷ 他選択肢の平均 がこれ以上なら NG
-  MIN_CHOICES: 3,
+  MIN_CHOICES: 4,              // yumekawa の 選択式は 4択（guide-testing.md の 機械検証も 4つ 前提）
   MAX_CHOICES: 4,
   SIMILARITY_WARN: 0.55,      // 元問題との文字バイグラム類似度
   STYLE_LEN_SPREAD: 2.2,      // 最長/最短 選択肢の比率がこれ超えで警告
@@ -163,3 +164,18 @@ export function validateQuizzes(list = [], ctxFor = () => ({})) {
 }
 
 export const STATUS_LABEL = { pass: '✅ 合格', warn: '⚠️ 要確認', fail: '⛔ 不合格' };
+
+/**
+ * AI の 類題を yumekawa の js/quizzes/*.js の 1問と 同じ 形に する（quiz_drafts に 入れる 形）。
+ *   - scenario（文字列）→ [{ name: 'ニコ', icon: '🦄', msg }]（yumekawa の 相棒の 吹き出し）
+ *   - source_no など Mochi Mona 内部の 項目は 落とす
+ */
+export function toYumekawaQuiz(quiz) {
+  const { source_no, ...q } = quiz || {};
+  const sc = q.scenario;
+  const scenario = Array.isArray(sc) ? sc
+    : (sc && String(sc).trim()) ? [{ name: 'ニコ', icon: '🦄', msg: String(sc).trim() }] : undefined;
+  const out = { q: q.q, a: q.a, c: q.c, hint: q.hint, job_title: q.job_title, job_desc: q.job_desc };
+  if (scenario) out.scenario = scenario;
+  return out;
+}
