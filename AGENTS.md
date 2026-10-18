@@ -16,6 +16,7 @@
 | **yumekawa**（`nekobb619-jpg/yumekawa`、GitHub Pages＋GAS） | 子どもが 毎日 使う 学習アプリ（4年生） | 単元マスタの **正本**（`js/school-units.js`）。類題は yumekawa の 問題の 形で 渡す |
 | **こども学習サポートポータル**（claude.ai の 非公開ページ） | 保護者の 作戦ボード（対策会議・単元カレンダー・おこづかい帳 など） | Mochi Mona の「ポータル用 JSON」を「取りこみ」タブに 貼ると 取りこめる |
 | **Obsidian Vault**（`nekobb619-jpg/myobsidianvault`） | 方針・手順・ログ | このプロジェクトの メモは `30_Projects/mochi-mona/README.md` |
+| **接続ボード**（claude.ai の 非公開ページ https://claude.ai/artifact/9Y3um3sCryh5SBDd6pYvRt ） | Mochi Mona × yumekawa の 決めること・作業・PR・データの 流れ | 保護者が 決めた ことは ここに ある。作業の 前に 読み、終わったら 状態を 更新する |
 
 データの 形（コレクション名・フィールド）の 正本は **[docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md)**。
 形を 変えるときは、DATA_CONTRACT・`js/kids-converter.js`・テスト・相手側（ポータル／yumekawa）を **同じ PR で** そろえる。
