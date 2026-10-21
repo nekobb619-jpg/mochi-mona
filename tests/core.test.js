@@ -18,12 +18,13 @@ test('単元マスタは u001〜u053 の53件で連番', () => {
   SCHOOL_UNITS.forEach((u, i) => assert.equal(u.id, `u${String(i + 1).padStart(3, '0')}`));
 });
 
-test('10月中旬の算数候補：学習中の「2けたでわるわり算の筆算」(u007)「面積」(u009)が先頭側、通年は後ろ', () => {
+test('10月中旬の算数候補：学習中の「2けたでわるわり算の筆算」(u007)「式と計算の順じょ」(u008)が先頭側、通年は後ろ', () => {
   const c = getUnitCandidates(new Date(2026, 9, 18), { subject: '算数' });
   const ids = c.map((x) => x.id);
   assert.ok(ids.includes('u007'));
-  assert.ok(ids.includes('u009'));
+  assert.ok(ids.includes('u008'));
   assert.equal(c[0].distance, 0);
+  assert.equal(c.find((x) => x.id === 'u008').phase, '学習中');
   assert.equal(c.find((x) => x.id === 'u007').phase, '学習中');
 });
 
