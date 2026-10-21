@@ -14,7 +14,7 @@ export const SCHOOL_UNITS = [
   { id: "u004", subject: "算数", title: "一億をこえる数", start: "05-25", end: "06-10", stages: ["算数/大きな数/ookazu01"] },
   { id: "u005", subject: "算数", title: "垂直・平行と四角形", start: "06-08", end: "06-30", stages: ["算数/図形/suichoku_heikou01","算数/図形/shikakukei_bunrui01","算数/図形/taikakusen01"] },
   { id: "u006", subject: "算数", title: "小数（しくみ・たし算ひき算）", start: "06-24", end: "07-17", stages: ["算数/小数/shosu01","算数/小数/shosu_keisan01"] },
-  { id: "u007", subject: "算数", title: "2けたでわるわり算の筆算", start: "09-01", end: "10-23", stages: ["算数/わり算/hissan_2digit01","算数/わり算/warizan_challenge01","算数/わり算/nakama_wake01"] },
+  { id: "u007", subject: "算数", title: "2けたでわるわり算の筆算", start: "09-01", end: "10-16", stages: ["算数/わり算/hissan_2digit01","算数/わり算/warizan_challenge01","算数/わり算/nakama_wake01"] },
   { id: "u008", subject: "算数", title: "式と計算の順じょ", start: "09-24", end: "10-30", stages: ["算数/式と計算/keisan_junjo01"] },
   { id: "u009", subject: "算数", title: "面積", start: "11-02", end: "11-20", stages: ["算数/面積/menseki_1","算数/面積/menseki_2","算数/面積/menseki_3"] },
   { id: "u010", subject: "算数", title: "がい数とその計算", start: "11-02", end: "11-18", stages: ["算数/がい数/gaisu01"] },
